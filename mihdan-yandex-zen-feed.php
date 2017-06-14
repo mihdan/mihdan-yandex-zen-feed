@@ -1,5 +1,14 @@
 <?php
 /**
+ * Mihdan: Yandex Zen Feed
+ *
+ * @package   mihdan-yandex-zen-feed
+ * @author    Mikhail Kobzarev
+ * @link      http://www.cedaro.com/
+ * @copyright Copyright (c) 2017
+ * @license   GPL-2.0+
+ * @wordpress-plugin
+ *
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
@@ -8,8 +17,6 @@
  * Author URI: https://www.kobzarev.com/
  * Text Domain: mihdan-yandex-zen-feed
  * GitHub Plugin URI: https://github.com/mihdan/mihdan-yandex-zen-feed/
- *
- * @package mihdan-yandex-zen-feed
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

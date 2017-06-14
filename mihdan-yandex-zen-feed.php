@@ -7,6 +7,7 @@
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * Text Domain: mihdan-yandex-zen-feed
+ * GitHub Plugin URI: https://github.com/mihdan/mihdan-yandex-zen-feed/
  *
  * @package mihdan-yandex-zen-feed
  */

@@ -1,7 +1,12 @@
 <?php
 /**
  * Plugin Name: Mihdan: Yandex Zen Feed
+ * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
+ * Version: 1.0
+ * Author: Mikhail Kobzarev
+ * Author URI: https://www.kobzarev.com/
+ * Text Domain: mihdan-yandex-zen-feed
  *
  * @package mihdan-yandex-zen-feed
  */
@@ -106,10 +111,6 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * Хукаем.
 		 */
 		private function hooks() {
-			add_feed( 'yandex-zen', array( $this, 'add_feed') );
-		}
-
-		public function after_setup_theme() {
 			add_feed( 'yandex-zen', array( $this, 'add_feed') );
 		}
 

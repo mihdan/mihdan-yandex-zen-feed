@@ -4,19 +4,26 @@
  *
  * @package   mihdan-yandex-zen-feed
  * @author    Mikhail Kobzarev
- * @link      http://www.cedaro.com/
+ * @link      https://github.com/mihdan/mihdan-yandex-zen-feed/
  * @copyright Copyright (c) 2017
  * @license   GPL-2.0+
  * @wordpress-plugin
- *
+ */
+
+/**
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
  * Version: 1.1
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
+ * License: GNU General Public License v2
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: mihdan-yandex-zen-feed
  * GitHub Plugin URI: https://github.com/mihdan/mihdan-yandex-zen-feed/
+ * GitHub Branch:     master
+ * Requires WP:       4.6
+ * Requires PHP:      5.3
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -119,7 +126,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * Хукаем.
 		 */
 		private function hooks() {
-			add_feed( 'yandex-zen', array( $this, 'add_feed') );
+			add_feed( 'yandex-zen', array( $this, 'add_feed' ) );
 		}
 
 		public function add_feed() {
@@ -134,23 +141,23 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * @return string
 		 */
 		public function clear_xml( $str ) {
-			$str = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $str);
+			$str = preg_replace( '#<script(.*?)>(.*?)</script>#is', '', $str );
 			$str = strip_tags( $str, '<br><br/><p><h2><h3><h4><h5><h6><ul><ol><li><img><a>' );
 
-			$str = str_replace('&hellip;', '...', $str);
-			$str = str_replace('&nbsp;', ' ', $str);
+			$str = str_replace( '&hellip;', '...', $str );
+			$str = str_replace( '&nbsp;', ' ', $str );
 
 			$str = preg_replace( '|(<img.*?src=".*?ajax\-loader.*?".*?>)|si', '', $str );
 			$str = preg_replace( '|<img.*?src=".*?gear_icon\.png".*?>|si', '', $str );
 			$str = preg_replace( '|<img([^>]+)>|si', '<img$1>', $str );
 			$str = str_replace( 'data-src="', 'src="', $str );
-			$str = preg_replace('/[\r\n]+/', "\n", $str);
-			$str = preg_replace('/[ \t]+/', ' ', $str);
+			$str = preg_replace( '/[\r\n]+/', "\n", $str );
+			$str = preg_replace( '/[ \t]+/', ' ', $str );
 
-			$str = preg_replace('/(<img.*?>)/', '<figure>$1</figure>', $str);
-			$str = preg_replace('/ style="[^"]+"/', '', $str);
-			$str = preg_replace('/ srcset="[^"]+"/', '', $str);
-			$str = preg_replace('/ sizes="[^"]+"/', '', $str);
+			$str = preg_replace( '/(<img.*?>)/', '<figure>$1</figure>', $str );
+			$str = preg_replace( '/ style="[^"]+"/', '', $str );
+			$str = preg_replace( '/ srcset="[^"]+"/', '', $str );
+			$str = preg_replace( '/ sizes="[^"]+"/', '', $str );
 
 			$str = str_replace( PHP_EOL, ' ', $str );
 			$str = str_replace( '  ', ' ', $str );
@@ -193,7 +200,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 			foreach ( $haystack as $key => $value ) {
 				$current_key = $key;
-				if ( $needle === $value OR ( is_array( $value ) && $this->array_search( $needle, $value ) !== false ) ) {
+				if ( $needle === $value or ( is_array( $value ) && $this->array_search( $needle, $value ) !== false ) ) {
 					return $current_key;
 				}
 			}

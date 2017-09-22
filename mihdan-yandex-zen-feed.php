@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.2
+ * Version: 1.2.1
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -39,7 +39,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 	 */
 	final class Mihdan_Yandex_Zen_Feed {
 
-		const SLUG = 'mihdan_yandex_zen_feed';
+		private $slug = 'mihdan_yandex_zen_feed';
 
 		/**
 		 * Путь к плагину
@@ -102,11 +102,6 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		}
 
 		/**
-		 * Serialization disabled
-		 */
-		private function __sleep() {}
-
-		/**
 		 * Установка основных переменных плагина
 		 */
 		private function setup() {
@@ -126,7 +121,21 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * Хукаем.
 		 */
 		private function hooks() {
-			add_feed( 'yandex-zen', array( $this, 'add_feed' ) );
+			add_feed( apply_filters( 'mihdan_yandex_zen_feed_feedname', $this->slug ), array( $this, 'add_feed' ) );
+			add_action( 'pre_get_posts', array( $this, 'alter_query' ) );
+		}
+
+		/**
+		 * Подправляем основной луп фида
+		 *
+		 * @param WP_Query $wp_query объект запроса
+		 */
+		public function alter_query( WP_Query $wp_query ) {
+			if ( $wp_query->is_main_query() && $wp_query->is_feed() && $this->slug === $wp_query->get( 'feed' ) ) {
+
+				// Ограничить посты 50-ю
+				$wp_query->set( 'posts_per_rss', 50 );
+			}
 		}
 
 		public function add_feed() {

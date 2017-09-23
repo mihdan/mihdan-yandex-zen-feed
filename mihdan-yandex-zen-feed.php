@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.2.1
+ * Version: 1.2.2
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -29,6 +29,50 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+//require_once __DIR__ . '/vendor/autoload.php';
+//
+//use DiDom\Document;
+//use DiDom\Element;
+//
+//$doc = new Document( 'http://ya.ru/', true );
+//if ( $doc->has( 'figure>img' ) ) {
+//	$figures = $doc->find( 'figure>img' );
+//	foreach ( $figures as $figure ) {
+//		$figure->parent();
+//		$figure->closest( '.foo' );
+//		//$figure->replace();
+//	}
+//
+//	$title = new Element( 'title', 'foo' );
+//
+//	$doc->first('title')->replace($title);
+//
+//	//$doc->
+//};
+
+add_filter( 'img_caption_shortcode');
+$html5 = current_theme_supports( 'html5', 'caption' );
+
+/**
+ * https://github.com/Imangazaliev/DiDOM/blob/master/README-RU.md
+ *
+ * 0. Массив фоток $enclosure
+ *    Если has_post_thumbnail() - добавить в массив фоток $enclosure
+ *
+ * 1. Если current_theme_supports( 'html5', 'caption' ); то нужный тег уже есть
+ *    парсим тогда figure.wp-caption>img[src]+figcaption.wp-caption-text
+ *    кладем в $enclosure
+ *
+ * 2. Если нет ищем div.wp-caption>img+p.wp-caption-text
+ *    кладем в $enclosure
+ *    меняем теги на нужные
+ *
+ * 3. Если не найдено ничего из ентого - ищем просто картинки
+ *    сохраняем в массив
+ *    меняем на нормальную структуру
+ */
+
 
 if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 

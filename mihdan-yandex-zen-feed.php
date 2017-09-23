@@ -51,8 +51,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 //	//$doc->
 //};
 
-add_filter( 'img_caption_shortcode');
-$html5 = current_theme_supports( 'html5', 'caption' );
+//add_filter( 'img_caption_shortcode');
+//$html5 = current_theme_supports( 'html5', 'caption' );
 
 /**
  * https://github.com/Imangazaliev/DiDOM/blob/master/README-RU.md

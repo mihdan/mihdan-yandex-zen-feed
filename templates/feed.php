@@ -45,26 +45,10 @@ $wpseo_titles = get_option( 'wpseo_titles' ); ?>
 					<category><?php echo esc_html( $category ); ?></category>
 				<?php endif; ?>
 
-				<?php if ( !1) :
-				// Получить обложку поста
-				$cover_id = get_post_thumbnail_id( get_the_ID() );
-
-				if ( $cover_id ) : ?>
-					<enclosure length="<?php echo esc_attr( filesize( get_attached_file( $cover_id ) ) ); ?>" url="<?php echo esc_url( wp_get_attachment_image_url( $cover_id, 'large' ) ); ?>" type="<?php echo esc_attr( get_post_mime_type( $cover_id ) ); ?>" />
-				<?php endif; ?>
-
-				<?php
-				// Все картинки для поста
-				$images = get_attached_media( 'image', get_the_ID() );
-				if ( $images ) : ?>
-					<?php foreach ( $images as $image ) : ?>
-						<enclosure length="<?php echo esc_attr( filesize( get_attached_file( $image->ID ) ) ); ?>" url="<?php echo esc_url( wp_get_attachment_image_url( $image->ID, 'large' ) ); ?>" type="<?php echo esc_attr( $image->post_mime_type ); ?>" />
-					<?php endforeach; ?>
-				<?php endif; endif;?>
-
 				<content:encoded>
 					<![CDATA[<?php the_content_feed(); ?>]]>
 				</content:encoded>
+
 				<?php do_action( 'mihdan_yandex_zen_feed_item', get_the_ID() ); ?>
 			</item>
 

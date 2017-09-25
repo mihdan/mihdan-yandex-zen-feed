@@ -3,7 +3,7 @@ Contributors: mihdan
 Tags: WordPress, Yandex, Zen, Feed
 Requires at least: 4.3
 Tested up to: 4.8.2
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 
 ## Description ##
 WordPress плагин, генерирующий фид для сервиса Яндекс.Дзен
@@ -16,6 +16,9 @@ WordPress плагин, генерирующий фид для сервиса Я
 * Активируйте плагин через меню Плагины.
 
 ## Changelog ##
+
+### 1.2.3 ###
+* Повесил инициализацию добавления фида на событие `init`
 
 ### 1.2.2 ###
 * Привёл впорядок README.md

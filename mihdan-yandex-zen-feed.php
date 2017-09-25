@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.2.3
+ * Version: 1.3.0
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -30,49 +30,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-//require_once __DIR__ . '/vendor/autoload.php';
-//
-//use DiDom\Document;
-//use DiDom\Element;
-//
-//$doc = new Document( 'http://ya.ru/', true );
-//if ( $doc->has( 'figure>img' ) ) {
-//	$figures = $doc->find( 'figure>img' );
-//	foreach ( $figures as $figure ) {
-//		$figure->parent();
-//		$figure->closest( '.foo' );
-//		//$figure->replace();
-//	}
-//
-//	$title = new Element( 'title', 'foo' );
-//
-//	$doc->first('title')->replace($title);
-//
-//	//$doc->
-//};
+require_once __DIR__ . '/vendor/autoload.php';
 
-//add_filter( 'img_caption_shortcode');
-//$html5 = current_theme_supports( 'html5', 'caption' );
-
-/**
- * https://github.com/Imangazaliev/DiDOM/blob/master/README-RU.md
- *
- * 0. Массив фоток $enclosure
- *    Если has_post_thumbnail() - добавить в массив фоток $enclosure
- *
- * 1. Если current_theme_supports( 'html5', 'caption' ); то нужный тег уже есть
- *    парсим тогда figure.wp-caption>img[src]+figcaption.wp-caption-text
- *    кладем в $enclosure
- *
- * 2. Если нет ищем div.wp-caption>img+p.wp-caption-text
- *    кладем в $enclosure
- *    меняем теги на нужные
- *
- * 3. Если не найдено ничего из ентого - ищем просто картинки
- *    сохраняем в массив
- *    меняем на нормальную структуру
- */
-
+use DiDom\Document;
+use DiDom\Element;
+use DiDom\Query;
 
 if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
@@ -84,6 +46,33 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 	final class Mihdan_Yandex_Zen_Feed {
 
 		private $slug = 'mihdan_yandex_zen_feed';
+
+		private $feedname;
+
+		/**
+		 * @var array $allowable_tags массив разрешенных тегов для контента
+		 */
+		private $allowable_tags = array(
+			'<br>',
+			'<p>',
+			'<h2>',
+			'<h3>',
+			'<h4>',
+			'<h5>',
+			'<h6>',
+			'<ul>',
+			'<ol>',
+			'<li>',
+			'<img>',
+			'<figcaption>',
+			'<figure>',
+			'<a>',
+		);
+
+		/**
+		 * @var array $enclosure для хранения фото у поста
+		 */
+		private $enclosure = array();
 
 		/**
 		 * Путь к плагину
@@ -151,9 +140,16 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		private function setup() {
 			self::$dir_path = apply_filters( 'mihdan_yandex_zen_feed_dir_path', trailingslashit( plugin_dir_path( __FILE__ ) ) );
 			self::$dir_uri   = apply_filters( 'mihdan_yandex_zen_feed_dir_uri', trailingslashit( plugin_dir_url( __FILE__ ) ) );
+		}
 
+		/**
+		 * Фильтры для переопределения настроек внутри темы
+		 */
+		public function after_setup_theme() {
 			$this->categories = apply_filters( 'mihdan_yandex_zen_feed_categories', array() );
 			$this->taxonomy = apply_filters( 'mihdan_yandex_zen_feed_taxonomy', $this->taxonomy );
+			$this->feedname = apply_filters( 'mihdan_yandex_zen_feed_feedname', $this->slug );
+			$this->allowable_tags = apply_filters( 'mihdan_yandex_zen_feed_allowable_tags', $this->allowable_tags );
 		}
 
 		/**
@@ -167,10 +163,173 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		private function hooks() {
 			add_action( 'init', array( $this, 'init' ) );
 			add_action( 'pre_get_posts', array( $this, 'alter_query' ) );
+			add_action( 'after_setup_theme', array( $this, 'after_setup_theme' ) );
+			add_action( 'mihdan_yandex_zen_feed_item', array( $this, 'insert_enclosure' ) );
+			add_filter( 'the_content_feed', array( $this, 'content_feed' ) );
 		}
 
+		/**
+		 * Хелпер для создания тега <enclosure>
+		 *
+		 * @param string $url ссылка
+		 * @param string $mime_type mime_type
+		 *
+		 * @return string
+		 */
+		public function create_enclosure( $url, $mime ) {
+			return sprintf( '<enclosure url="%s" type="%s" />', esc_url( $url ), esc_attr( $mime ) );
+		}
+
+		public function insert_enclosure() {
+			foreach ( $this->enclosure as $image ) {
+				echo $this->create_enclosure( $image['src'], $image['mime'] );
+			}
+		}
+
+		/**
+		 * Получить тумбочку поста по его ID
+		 *
+		 * @param integer $post_id идентификатор поста
+		 */
+		public function get_futured_image( $post_id ) {
+
+			$url = get_the_post_thumbnail_url( $post_id, 'large' );
+
+			$this->enclosure[] = array(
+				'src' => $url,
+				'alt' => esc_attr( get_the_title( $post_id ) ),
+				'mime' => wp_check_filetype( $url )['type'],
+			);
+
+		}
+
+		/**
+		 * Форматируем контент <item>'а в соответствии со спекой
+		 *
+		 * Преобразуем HTML-контент в DOM-дерево,
+		 * проводим нужные манипуляции с тегами,
+		 * преобразуем DOM-дерево обратно в HTML-контент
+		 *
+		 * @param string $content содержимое <item> фида
+		 *
+		 * @return string
+		 */
+		public function content_feed( $content ) {
+
+			//ini_set( 'display_errors', true );
+
+			if ( is_feed( $this->feedname ) ) {
+				$content = $this->strip_tags( $content, $this->allowable_tags );
+				$content = $this->clear_xml( $content );
+
+				$document = new Document();
+
+				// Не добавлять теги <html>, <body>, <doctype>
+				$document->loadHtml( $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
+
+				// В span.copyright ставим домен
+				$copyright = new Element( 'span', parse_url( get_home_url(), PHP_URL_HOST ), array(
+					'class' => 'copyright',
+				) );
+
+				/**
+				 * Получить тумбочку поста
+				 */
+				if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() ) {
+					$this->get_futured_image( get_the_ID() );
+				}
+
+				/**
+				 * Если включена поддержка тегов <figure> на уровне двигла,
+				 * то теги <figure>, <figcaption> уже есть и надо добавить
+				 * только span.copyright
+				 */
+				if ( current_theme_supports( 'html5', 'caption' ) ) {
+					// TODO: реализовать
+					$html5 = $document->find( 'figure.wp-caption' );
+				} else {
+					// TODO: реализовать
+					$html4 = $document->find( 'div.wp-caption' );
+
+					/**
+					 * Если в тексте есть теги <div class="wp-caption">
+					 */
+					if ( $html4 ) {
+
+					} else {
+						/**
+						 * Если нет ни HTML5 ни HTML4 нотации,
+						 * ищем простые теги <img>, ставим их ALT
+						 * в <figcaption>, и добавляем <span class="copyright">
+						 */
+						$images = $document->find( 'img' );
+
+						if ( $images ) {
+							foreach ( $images as $image ) {
+								/** @var Element $image */
+								$this->enclosure[] = array(
+									'src' => $image->attr( 'src' ),
+									'alt' => $image->attr( 'alt' ),
+									'mime' => wp_check_filetype( $image->attr( 'src' ) )['type'],
+								);
+
+								// Создаем тег <figure>
+								$figure = new Element( 'figure' );
+
+								// Создаем тег <img>
+								$img = new Element( 'img', null, array(
+									'src' => $image->attr( 'src' ),
+								) );
+
+								// Создаем тег <figcaption>
+								$figcaption = new Element( 'figcaption', esc_attr( $image->attr( 'alt' ) ) );
+
+								// Вкладываем тег <img> в <figure>
+								$figure->appendChild( $img );
+
+								// Вкладываем тег <span class="copyright"> в <figcaption>
+								$figcaption->appendChild( $copyright );
+
+								// Вкладываем тег <figcaption> в <figure>
+								$figure->appendChild( $figcaption );
+
+								// Заменяем тег <img> на сгенерированую конструкцию
+								$image->replace( $figure );
+
+							}
+						}
+					}
+				}
+
+				$content = $document->format( true )->html();
+				/**
+				 * https://github.com/Imangazaliev/DiDOM/blob/master/README-RU.md
+				 *
+				 * 0. Массив фоток $enclosure
+				 *    Если has_post_thumbnail() - добавить в массив фоток $enclosure
+				 *
+				 * 1. Если current_theme_supports( 'html5', 'caption' ); то нужный тег уже есть
+				 *    парсим тогда figure.wp-caption>img[src]+figcaption.wp-caption-text
+				 *    кладем в $enclosure
+				 *
+				 * 2. Если нет ищем div.wp-caption>img+p.wp-caption-text
+				 *    кладем в $enclosure
+				 *    меняем теги на нужные
+				 *
+				 * 3. Если не найдено ничего из ентого - ищем просто картинки
+				 *    сохраняем в массив
+				 *    меняем на нормальную структуру
+				 */
+			}
+
+			return $content;
+		}
+
+		/**
+		 * Регистрация нашего фида
+		 */
 		public function init() {
-			add_feed( apply_filters( 'mihdan_yandex_zen_feed_feedname', $this->slug ), array( $this, 'add_feed' ) );
+			add_feed( $this->feedname, array( $this, 'add_feed' ) );
 		}
 
 		/**
@@ -182,12 +341,31 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			if ( $wp_query->is_main_query() && $wp_query->is_feed() && $this->slug === $wp_query->get( 'feed' ) ) {
 
 				// Ограничить посты 50-ю
-				$wp_query->set( 'posts_per_rss', 50 );
+				//$wp_query->set( 'posts_per_rss', 50 );
+				$wp_query->set( 'posts_per_rss', 10 );
 			}
 		}
 
 		public function add_feed() {
 			require self::$dir_path . 'templates/feed.php';
+		}
+
+		/**
+		 * Удалить все теги из строки
+		 *
+		 * Расширенная версия функции `strip_tags` в PHP,
+		 * но удаляет также <script>, <style>
+		 *
+		 * @param string $string исходная строка
+		 * @param null|array $allowable_tags массив разрешенных тегов
+		 *
+		 * @return string
+		 */
+		public function strip_tags( $string, $allowable_tags = null ) {
+			$string = preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $string );
+			$string = strip_tags( $string, implode( ',', $allowable_tags ) );
+
+			return $string;
 		}
 
 		/**
@@ -198,8 +376,6 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * @return string
 		 */
 		public function clear_xml( $str ) {
-			$str = preg_replace( '#<script(.*?)>(.*?)</script>#is', '', $str );
-			$str = strip_tags( $str, '<br><br/><p><h2><h3><h4><h5><h6><ul><ol><li><img><a>' );
 
 			$str = str_replace( '&hellip;', '...', $str );
 			$str = str_replace( '&nbsp;', ' ', $str );
@@ -211,13 +387,18 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			$str = preg_replace( '/[\r\n]+/', "\n", $str );
 			$str = preg_replace( '/[ \t]+/', ' ', $str );
 
-			$str = preg_replace( '/(<img.*?>)/', '<figure>$1</figure>', $str );
+			/**$str = preg_replace( '/(<img.*?>)/', '<figure>$1</figure>', $str );*/
 			$str = preg_replace( '/ style="[^"]+"/', '', $str );
 			$str = preg_replace( '/ srcset="[^"]+"/', '', $str );
 			$str = preg_replace( '/ sizes="[^"]+"/', '', $str );
 
-			$str = str_replace( PHP_EOL, ' ', $str );
-			$str = str_replace( '  ', ' ', $str );
+			$str = str_replace( PHP_EOL, '', $str );
+			$str = preg_replace( '/\s+/', ' ', $str );
+			$str = str_replace( '> <', '><', $str );
+			$str = preg_replace( '/<[^\/>]*><\/[^>]*>/', '', $str );
+
+
+			//$str = force_balance_tags( $str );
 
 			return trim( $str );
 		}

@@ -298,8 +298,8 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 							}
 						}
-					}
-				}
+					} // End if().
+				} // End if().
 
 				$content = $document->format( true )->html();
 				/**

@@ -45,10 +45,25 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 	 */
 	final class Mihdan_Yandex_Zen_Feed {
 
+		/**
+		 * @var string слюг плагина
+		 */
 		private $slug = 'mihdan_yandex_zen_feed';
 
+		/**
+		 * @var string $feedname слюг фида
+		 */
 		private $feedname;
+
+		/**
+		 * @var string $copyright текст копирайта для фото
+		 */
 		private $copyright;
+
+		/**
+		 * @var integer $posts_per_rss максимальное количество постов в ленте
+		 */
+		private $posts_per_rss;
 
 		/**
 		 * @var array $allowable_tags массив разрешенных тегов для контента
@@ -130,7 +145,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 *
 		 * Mihdan_FAQ constructor.
 		 */
-		private function __construct() { $this->get_image_size('http://localhost/wordpress/wp-content/uploads/2017/06/w5MfsnMn_400x400.jpg');
+		private function __construct() {
 			$this->setup();
 			$this->includes();
 			$this->hooks();
@@ -148,11 +163,15 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * Фильтры для переопределения настроек внутри темы
 		 */
 		public function after_setup_theme() {
+			$this->posts_per_rss = apply_filters( 'mihdan_yandex_zen_feed_posts_per_rss', 50 );
 			$this->categories = apply_filters( 'mihdan_yandex_zen_feed_categories', array() );
 			$this->taxonomy = apply_filters( 'mihdan_yandex_zen_feed_taxonomy', $this->taxonomy );
-			$this->feedname = str_replace( '_', '-', apply_filters( 'mihdan_yandex_zen_feed_feedname', $this->slug ) );
+			$this->feedname = apply_filters( 'mihdan_yandex_zen_feed_feedname', $this->slug );
 			$this->allowable_tags = apply_filters( 'mihdan_yandex_zen_feed_allowable_tags', $this->allowable_tags );
 			$this->copyright = apply_filters( 'mihdan_yandex_zen_feed_copyright', parse_url( get_home_url(), PHP_URL_HOST ) );
+
+			// Подчеркивание нельзя использовать на старых серверах.
+			$this->feedname = str_replace( '_', '-', $this->feedname );
 		}
 
 		/**
@@ -440,7 +459,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			if ( $wp_query->is_main_query() && $wp_query->is_feed() && $this->slug === $wp_query->get( 'feed' ) ) {
 
 				// Ограничить посты 50-ю
-				$wp_query->set( 'posts_per_rss', 50 );
+				$wp_query->set( 'posts_per_rss', $this->posts_per_rss );
 			}
 		}
 

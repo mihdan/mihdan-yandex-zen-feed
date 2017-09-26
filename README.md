@@ -17,6 +17,9 @@ WordPress плагин, генерирующий фид для сервиса Я
 
 ## Changelog ##
 
+## 1.4.3 ##
+* Добавил фильтр `mihdan_yandex_zen_feed_posts_per_rss`
+
 ## 1.4.2 ##
 * Добавил атрибуты `width` и `height` для `img`
 

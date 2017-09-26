@@ -26,7 +26,7 @@ echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?' . '>
 			<item>
 				<title><?php the_title_rss(); ?></title>
 				<link><?php the_permalink_rss(); ?></link>
-				<guid><?php the_permalink_rss(); ?></guid>
+				<guid><?php echo esc_html( wp_get_shortlink() ); ?></guid>
 				<pubDate><?php echo get_post_time( 'r', true ); ?></pubDate>
 				<author><?php the_author(); ?></author>
 				<description><?php the_excerpt_rss(); ?></description>

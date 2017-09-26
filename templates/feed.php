@@ -20,14 +20,14 @@ echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?' . '>
 		<link><?php bloginfo_rss( 'url' ); ?></link>
 		<description><?php bloginfo_rss( 'description' ); ?></description>
 		<language><?php bloginfo_rss( 'language' ); ?></language>
-		<atom:link href="<?php echo esc_url( get_feed_link('yandex-zen') ); ?>" rel="self" type="application/rss+xml" />
+		<atom:link href="<?php echo esc_url( get_feed_link( 'yandex-zen' ) ); ?>" rel="self" type="application/rss+xml" />
 		<?php do_action( 'rss2_head' ); ?>
-		<?php while( have_posts()) : the_post(); ?>
+		<?php while ( have_posts() ) : the_post(); ?>
 			<item>
 				<title><?php the_title_rss(); ?></title>
 				<link><?php the_permalink_rss(); ?></link>
 				<guid><?php the_permalink_rss(); ?></guid>
-				<pubDate><?php echo mysql2date( 'r', get_the_time( 'Y-m-d H:i:s' ), false ); ?></pubDate>
+				<pubDate><?php echo get_post_time( 'r' ); ?></pubDate>
 				<author><?php the_author(); ?></author>
 				<description><?php  ob_start(); the_excerpt();  $output = ob_get_contents();  ob_end_clean(); echo mihdan_yandex_zen_feed()->clear_xml( strip_tags( $output ) ); ?></description>
 

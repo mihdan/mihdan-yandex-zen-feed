@@ -20,7 +20,6 @@ echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?' . '>
 		<link><?php bloginfo_rss( 'url' ); ?></link>
 		<description><?php bloginfo_rss( 'description' ); ?></description>
 		<language><?php bloginfo_rss( 'language' ); ?></language>
-		<atom:link href="<?php echo esc_url( get_feed_link( $this->feedname ) ); ?>" rel="self" type="application/rss+xml" />
 		<?php do_action( 'rss2_head' ); ?>
 		<?php while ( have_posts() ) : the_post(); ?>
 			<item>
@@ -29,7 +28,7 @@ echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?' . '>
 				<guid><?php echo esc_html( wp_get_shortlink() ); ?></guid>
 				<pubDate><?php echo get_post_time( 'r', true ); ?></pubDate>
 				<author><?php the_author(); ?></author>
-				<description><?php the_excerpt_rss(); ?></description>
+				<description><![CDATA[<?php the_excerpt_rss(); ?>]]></description>
 				<content:encoded>
 					<![CDATA[<?php the_content_feed(); ?>]]>
 				</content:encoded>

@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.4.2
+ * Version: 1.4.4
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -53,7 +53,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		/**
 		 * @var string $feedname слюг фида
 		 */
-		private $feedname;
+		public $feedname;
 
 		/**
 		 * @var string $copyright текст копирайта для фото
@@ -84,6 +84,10 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			'<figure>',
 			//'<a>',
 			'<div>',
+			'<b>',
+			'<strong>',
+			'<i>',
+			'<em>',
 		);
 
 		/**
@@ -183,11 +187,16 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * Хукаем.
 		 */
 		private function hooks() {
+			register_activation_hook( __FILE__, array( $this, 'on_activate' ) );
+			register_deactivation_hook( __FILE__, array( $this, 'on_deactivate' ) );
 			add_action( 'init', array( $this, 'init' ) );
 			add_action( 'pre_get_posts', array( $this, 'alter_query' ) );
 			add_action( 'after_setup_theme', array( $this, 'after_setup_theme' ) );
 			add_action( 'mihdan_yandex_zen_feed_item', array( $this, 'insert_enclosure' ) );
+			add_action( 'mihdan_yandex_zen_feed_item', array( $this, 'insert_category' ) );
 			add_filter( 'the_content_feed', array( $this, 'content_feed' ) );
+
+			//print_r(get_option( 'rewrite_rules' ));die;
 		}
 
 		/**
@@ -201,9 +210,37 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			return sprintf( '<enclosure url="%s" type="%s" />', esc_url( $url ), esc_attr( wp_check_filetype( $url )['type'] ) );
 		}
 
+		/**
+		 * Вставка <enclosure> в шаблон
+		 */
 		public function insert_enclosure() {
 			foreach ( $this->enclosure as $image ) {
 				echo $this->create_enclosure( $image['src'] );
+			}
+		}
+
+		/**
+		 * Хелпер для создания тега <category>
+		 *
+		 * @param string $category название категории
+		 *
+		 * @return string
+		 */
+		public function create_category( $category ) {
+			return sprintf( '<category>%s</category>', esc_html( $category ) );
+		}
+
+		/**
+		 * Вставка <category> в шаблон
+		 *
+		 * @param int $post_id идентификатор поста
+		 */
+		public function insert_category( $post_id ) {
+
+			$categories = get_the_terms( $post_id, $this->taxonomy );
+
+			foreach ( $categories as $category ) {
+				echo $this->create_category( $this->get_category( $category->term_id ) );
 			}
 		}
 
@@ -564,10 +601,21 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		}
 
 		/**
-		 * Сбросить реврайты при активации/деактивации плагина.
+		 * Сбросить реврайты при активации плагина.
 		 */
-		public static function flush_rewrite() {
-			flush_rewrite_rules();
+		public function on_acivate() {
+			if ( current_user_can( 'activate_plugins' ) ) {
+				flush_rewrite_rules( false );
+			}
+		}
+
+		/**
+		 * Сбросить реврайты при деактивации плагина.
+		 */
+		public function on_deacivate() {
+			if ( current_user_can( 'activate_plugins' ) ) {
+				flush_rewrite_rules( false );
+			}
 		}
 	}
 
@@ -576,6 +624,4 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 	}
 
 	mihdan_yandex_zen_feed();
-	register_activation_hook( __FILE__, array( 'Mihdan_Yandex_Zen_Feed', 'flush_rewrite' ) );
-	register_deactivation_hook( __FILE__, array( 'Mihdan_Yandex_Zen_Feed', 'flush_rewrite' ) );
 }

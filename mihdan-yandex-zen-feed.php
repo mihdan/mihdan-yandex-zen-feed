@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -48,6 +48,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		private $slug = 'mihdan_yandex_zen_feed';
 
 		private $feedname;
+		private $copyright;
 
 		/**
 		 * @var array $allowable_tags массив разрешенных тегов для контента
@@ -66,7 +67,8 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			'<img>',
 			'<figcaption>',
 			'<figure>',
-			'<a>',
+			//'<a>',
+			'<div>',
 		);
 
 		/**
@@ -148,8 +150,9 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		public function after_setup_theme() {
 			$this->categories = apply_filters( 'mihdan_yandex_zen_feed_categories', array() );
 			$this->taxonomy = apply_filters( 'mihdan_yandex_zen_feed_taxonomy', $this->taxonomy );
-			$this->feedname = apply_filters( 'mihdan_yandex_zen_feed_feedname', $this->slug );
+			$this->feedname = str_replace( '_', '-', apply_filters( 'mihdan_yandex_zen_feed_feedname', $this->slug ) );
 			$this->allowable_tags = apply_filters( 'mihdan_yandex_zen_feed_allowable_tags', $this->allowable_tags );
+			$this->copyright = apply_filters( 'mihdan_yandex_zen_feed_copyright', parse_url( get_home_url(), PHP_URL_HOST ) );
 		}
 
 		/**
@@ -172,17 +175,16 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * Хелпер для создания тега <enclosure>
 		 *
 		 * @param string $url ссылка
-		 * @param string $mime_type mime_type
 		 *
 		 * @return string
 		 */
-		public function create_enclosure( $url, $mime ) {
-			return sprintf( '<enclosure url="%s" type="%s" />', esc_url( $url ), esc_attr( $mime ) );
+		public function create_enclosure( $url ) {
+			return sprintf( '<enclosure url="%s" type="%s" />', esc_url( $url ), esc_attr( wp_check_filetype( $url )['type'] ) );
 		}
 
 		public function insert_enclosure() {
 			foreach ( $this->enclosure as $image ) {
-				echo $this->create_enclosure( $image['src'], $image['mime'] );
+				echo $this->create_enclosure( $image['src'] );
 			}
 		}
 
@@ -197,10 +199,48 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 			$this->enclosure[] = array(
 				'src' => $url,
-				'alt' => esc_attr( get_the_title( $post_id ) ),
-				'mime' => wp_check_filetype( $url )['type'],
+				'figcaption' => esc_attr( get_the_title( $post_id ) ),
 			);
 
+		}
+
+		/**
+		 * Генерим валидный тег <figure>
+		 *
+		 * @param $src
+		 * @param $caption
+		 * @param $copyright
+		 *
+		 * @return Element
+		 */
+		public function create_valid_structure( $src, $caption, $copyright ) {
+
+			// Создаем тег <figure>
+			$figure = new Element( 'figure' );
+
+			// Создаем тег <img>
+			$img = new Element( 'img', null, array(
+				'src' => $src,
+			) );
+
+			// Создаем тег <figcaption>
+			$figcaption = new Element( 'figcaption', $caption );
+
+			// Создаем тег <span class="copyright">
+			$copyright = new Element( 'span', $copyright, array(
+				'class' => 'copyright',
+			) );
+
+			// Вкладываем тег <img> в <figure>
+			$figure->appendChild( $img );
+
+			// Вкладываем тег <span class="copyright"> в <figcaption>
+			$figcaption->appendChild( $copyright );
+
+			// Вкладываем тег <figcaption> в <figure>
+			$figure->appendChild( $figcaption );
+
+			return $figure;
 		}
 
 		/**
@@ -219,18 +259,19 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			//ini_set( 'display_errors', true );
 
 			if ( is_feed( $this->feedname ) ) {
+
+				$this->enclosure = array();
+
 				$content = $this->strip_tags( $content, $this->allowable_tags );
 				$content = $this->clear_xml( $content );
 
 				$document = new Document();
+				$document->format( true );
 
 				// Не добавлять теги <html>, <body>, <doctype>
-				$document->loadHtml( $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
+				$document->loadHtml( $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOBLANKS );
 
-				// В span.copyright ставим домен
-				$copyright = new Element( 'span', parse_url( get_home_url(), PHP_URL_HOST ), array(
-					'class' => 'copyright',
-				) );
+				$copyright = $this->copyright;
 
 				/**
 				 * Получить тумбочку поста
@@ -245,61 +286,81 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				 * только span.copyright
 				 */
 				if ( current_theme_supports( 'html5', 'caption' ) ) {
-					// TODO: реализовать
-					$html5 = $document->find( 'figure.wp-caption' );
+
+					$figures = $document->find( 'figure.wp-caption' );
+
+					foreach ( $figures as $figure ) {
+
+						/** @var Element $figure */
+						/** @var Element $image */
+
+						// Ищем картинку <img class="wp-image-*">
+						$image = $figure->first( 'img[class*="wp-image"]' );
+						$src = $image->attr( 'src' );
+
+						// Ищем подпись <figcaption class="wp-caption-text">
+						$figcaption = $image->nextSibling( 'figcaption.wp-caption-text' );
+						$caption = $figcaption->text();
+
+						$this->enclosure[] = array(
+							'src' => $src,
+							'caption' => $caption,
+						);
+
+						$figure->replace( $this->create_valid_structure( $src, $caption, $copyright ) );
+					}
 				} else {
-					// TODO: реализовать
-					$html4 = $document->find( 'div.wp-caption' );
+					$figures = $document->find( 'div.wp-caption' );
 
-					/**
-					 * Если в тексте есть теги <div class="wp-caption">
-					 */
-					if ( $html4 ) {
+					foreach ( $figures as $figure ) {
 
-					} else {
-						/**
-						 * Если нет ни HTML5 ни HTML4 нотации,
-						 * ищем простые теги <img>, ставим их ALT
-						 * в <figcaption>, и добавляем <span class="copyright">
-						 */
-						$images = $document->find( 'img' );
+						/** @var Element $figure */
+						/** @var Element $image */
 
-						if ( $images ) {
-							foreach ( $images as $image ) {
-								/** @var Element $image */
-								$this->enclosure[] = array(
-									'src' => $image->attr( 'src' ),
-									'alt' => $image->attr( 'alt' ),
-									'mime' => wp_check_filetype( $image->attr( 'src' ) )['type'],
-								);
+						// Ищем картинку <img class="wp-image-*">
+						$image = $figure->first( 'img[class*="wp-image-"]' );
+						$src = $image->attr( 'src' );
 
-								// Создаем тег <figure>
-								$figure = new Element( 'figure' );
+						// Ищем подпись <figcaption class="wp-caption-text">
+						$figcaption = $image->nextSibling( 'p.wp-caption-text' );
+						$caption = $figcaption->text();
 
-								// Создаем тег <img>
-								$img = new Element( 'img', null, array(
-									'src' => $image->attr( 'src' ),
-								) );
+						$this->enclosure[] = array(
+							'src' => $src,
+							'caption' => $caption,
+						);
 
-								// Создаем тег <figcaption>
-								$figcaption = new Element( 'figcaption', esc_attr( $image->attr( 'alt' ) ) );
-
-								// Вкладываем тег <img> в <figure>
-								$figure->appendChild( $img );
-
-								// Вкладываем тег <span class="copyright"> в <figcaption>
-								$figcaption->appendChild( $copyright );
-
-								// Вкладываем тег <figcaption> в <figure>
-								$figure->appendChild( $figcaption );
-
-								// Заменяем тег <img> на сгенерированую конструкцию
-								$image->replace( $figure );
-
-							}
-						}
-					} // End if().
+						$figure->replace( $this->create_valid_structure( $src, $caption, $copyright ) );
+					}
 				} // End if().
+
+				/**
+				 * Если нет ни HTML5 ни HTML4 нотации,
+				 * ищем простые теги <img>, ставим их ALT
+				 * в <figcaption>, и добавляем <span class="copyright">
+				 */
+				$images = $document->find( 'p > img[class*="wp-image-"]' );
+
+				if ( $images ) {
+					foreach ( $images as $image ) {
+						/** @var Element $image */
+						/** @var Element $paragraph */
+						$paragraph = $image->parent();
+						$src = $image->attr( 'src' );
+						$caption = $image->attr( 'alt' );
+
+						$this->enclosure[] = array(
+							'src' => $src,
+							'figcaption' => $caption,
+						);
+
+						// Заменяем тег <img> на сгенерированую конструкцию
+						$paragraph->replace( $this->create_valid_structure( $src, $caption, $copyright ) );
+
+					}
+				}
+
+
 
 				$content = $document->format( true )->html();
 				/**
@@ -398,7 +459,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			$str = preg_replace( '/<[^\/>]*><\/[^>]*>/', '', $str );
 
 
-			//$str = force_balance_tags( $str );
+			$str = force_balance_tags( $str );
 
 			return trim( $str );
 		}

@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.4.0
+ * Version: 1.4.1
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -340,6 +340,31 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				 * в <figcaption>, и добавляем <span class="copyright">
 				 */
 				$images = $document->find( 'p > img[class*="wp-image-"]' );
+
+				if ( $images ) {
+					foreach ( $images as $image ) {
+						/** @var Element $image */
+						/** @var Element $paragraph */
+						$paragraph = $image->parent();
+						$src = $image->attr( 'src' );
+						$caption = $image->attr( 'alt' );
+
+						$this->enclosure[] = array(
+							'src' => $src,
+							'figcaption' => $caption,
+						);
+
+						// Заменяем тег <img> на сгенерированую конструкцию
+						$paragraph->replace( $this->create_valid_structure( $src, $caption, $copyright ) );
+
+					}
+				}
+
+				/**
+				 * Если нет ни HTML5 ни HTML4 нотации,
+				 * ищем простые теги <img> внутри <div>
+				 */
+				$images = $document->find( 'div > img' );
 
 				if ( $images ) {
 					foreach ( $images as $image ) {

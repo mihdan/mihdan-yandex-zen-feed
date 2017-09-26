@@ -17,6 +17,9 @@ WordPress плагин, генерирующий фид для сервиса Я
 
 ## Changelog ##
 
+## 1.4.1 ##
+* Добавил обработку `div > img`
+
 ## 1.4.0 ##
 * Добавлен фильтр `mihdan_yandex_zen_feed_copyright`
 * Проверка на HTML5 `<caption>` через `current_theme_supports()`

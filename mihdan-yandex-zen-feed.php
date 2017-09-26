@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.4.1
+ * Version: 1.4.2
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -130,7 +130,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 *
 		 * Mihdan_FAQ constructor.
 		 */
-		private function __construct() {
+		private function __construct() { $this->get_image_size('http://localhost/wordpress/wp-content/uploads/2017/06/w5MfsnMn_400x400.jpg');
 			$this->setup();
 			$this->includes();
 			$this->hooks();
@@ -189,6 +189,32 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		}
 
 		/**
+		 * Превращаем абсолютный URL в относительный
+		 *
+		 * @param string $url исходный URL
+		 *
+		 * @return mixed
+		 */
+		public function get_relative_url( $url ) {
+			$upload_dir = wp_upload_dir();
+			return $upload_dir['basedir'] . str_replace( $upload_dir['baseurl'], '', $url );
+		}
+
+
+		/**
+		 * Получить размеры фотки по абсолютному URL
+		 *
+		 * @param string $url абсолютный URL
+		 *
+		 * @return array|bool
+		 */
+		public function get_image_size( $url ) {
+			$relative = $this->get_relative_url( $url );
+
+			return getimagesize( $relative );
+		}
+
+		/**
 		 * Получить тумбочку поста по его ID
 		 *
 		 * @param integer $post_id идентификатор поста
@@ -199,7 +225,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 			$this->enclosure[] = array(
 				'src' => $url,
-				'figcaption' => esc_attr( get_the_title( $post_id ) ),
+				'caption' => esc_attr( get_the_title( $post_id ) ),
 			);
 
 		}
@@ -213,7 +239,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 *
 		 * @return Element
 		 */
-		public function create_valid_structure( $src, $caption, $copyright ) {
+		public function create_valid_structure( $src, $caption, $copyright, $width, $height ) {
 
 			// Создаем тег <figure>
 			$figure = new Element( 'figure' );
@@ -221,6 +247,8 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			// Создаем тег <img>
 			$img = new Element( 'img', null, array(
 				'src' => $src,
+				'width' => $width,
+				'height' => $height,
 			) );
 
 			// Создаем тег <figcaption>
@@ -297,6 +325,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 						// Ищем картинку <img class="wp-image-*">
 						$image = $figure->first( 'img[class*="wp-image"]' );
 						$src = $image->attr( 'src' );
+						$size = $this->get_image_size( $src );
 
 						// Ищем подпись <figcaption class="wp-caption-text">
 						$figcaption = $image->nextSibling( 'figcaption.wp-caption-text' );
@@ -307,7 +336,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 							'caption' => $caption,
 						);
 
-						$figure->replace( $this->create_valid_structure( $src, $caption, $copyright ) );
+						$figure->replace( $this->create_valid_structure( $src, $caption, $copyright, $size[0], $size[1] ) );
 					}
 				} else {
 					$figures = $document->find( 'div.wp-caption' );
@@ -320,6 +349,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 						// Ищем картинку <img class="wp-image-*">
 						$image = $figure->first( 'img[class*="wp-image-"]' );
 						$src = $image->attr( 'src' );
+						$size = $this->get_image_size( $src );
 
 						// Ищем подпись <figcaption class="wp-caption-text">
 						$figcaption = $image->nextSibling( 'p.wp-caption-text' );
@@ -330,7 +360,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 							'caption' => $caption,
 						);
 
-						$figure->replace( $this->create_valid_structure( $src, $caption, $copyright ) );
+						$figure->replace( $this->create_valid_structure( $src, $caption, $copyright, $size[0], $size[1] ) );
 					}
 				} // End if().
 
@@ -347,6 +377,8 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 						/** @var Element $paragraph */
 						$paragraph = $image->parent();
 						$src = $image->attr( 'src' );
+						$size = $this->get_image_size( $src );
+
 						$caption = $image->attr( 'alt' );
 
 						$this->enclosure[] = array(
@@ -355,7 +387,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 						);
 
 						// Заменяем тег <img> на сгенерированую конструкцию
-						$paragraph->replace( $this->create_valid_structure( $src, $caption, $copyright ) );
+						$paragraph->replace( $this->create_valid_structure( $src, $caption, $copyright, $size[0], $size[1] ) );
 
 					}
 				}
@@ -372,6 +404,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 						/** @var Element $paragraph */
 						$paragraph = $image->parent();
 						$src = $image->attr( 'src' );
+						$size = $this->get_image_size( $src );
 						$caption = $image->attr( 'alt' );
 
 						$this->enclosure[] = array(
@@ -380,7 +413,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 						);
 
 						// Заменяем тег <img> на сгенерированую конструкцию
-						$paragraph->replace( $this->create_valid_structure( $src, $caption, $copyright ) );
+						$paragraph->replace( $this->create_valid_structure( $src, $caption, $copyright, $size[0], $size[1] ) );
 
 					}
 				}

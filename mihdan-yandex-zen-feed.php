@@ -360,28 +360,8 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 					}
 				}
 
-
-
 				$content = $document->format( true )->html();
-				/**
-				 * https://github.com/Imangazaliev/DiDOM/blob/master/README-RU.md
-				 *
-				 * 0. Массив фоток $enclosure
-				 *    Если has_post_thumbnail() - добавить в массив фоток $enclosure
-				 *
-				 * 1. Если current_theme_supports( 'html5', 'caption' ); то нужный тег уже есть
-				 *    парсим тогда figure.wp-caption>img[src]+figcaption.wp-caption-text
-				 *    кладем в $enclosure
-				 *
-				 * 2. Если нет ищем div.wp-caption>img+p.wp-caption-text
-				 *    кладем в $enclosure
-				 *    меняем теги на нужные
-				 *
-				 * 3. Если не найдено ничего из ентого - ищем просто картинки
-				 *    сохраняем в массив
-				 *    меняем на нормальную структуру
-				 */
-			}
+			} // End if().
 
 			return $content;
 		}
@@ -402,8 +382,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			if ( $wp_query->is_main_query() && $wp_query->is_feed() && $this->slug === $wp_query->get( 'feed' ) ) {
 
 				// Ограничить посты 50-ю
-				//$wp_query->set( 'posts_per_rss', 50 );
-				$wp_query->set( 'posts_per_rss', 10 );
+				$wp_query->set( 'posts_per_rss', 50 );
 			}
 		}
 

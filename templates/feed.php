@@ -8,9 +8,7 @@
 
 header( 'Content-Type: ' . feed_content_type( 'rss-http' ) . '; charset=' . get_option( 'blog_charset' ), true );
 echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?' . '>';
-
-$wpseo_titles = get_option( 'wpseo_titles' ); ?>
-
+?>
 <rss version="2.0"
      xmlns:content="http://purl.org/rss/1.0/modules/content/"
      xmlns:dc="http://purl.org/dc/elements/1.1/"
@@ -20,8 +18,8 @@ $wpseo_titles = get_option( 'wpseo_titles' ); ?>
 	<channel>
 		<title><?php bloginfo_rss( 'name' ); ?></title>
 		<link><?php bloginfo_rss( 'url' ); ?></link>
-		<description><?php echo esc_html( $wpseo_titles['metadesc-home-wpseo'] ); ?></description>
-		<language>ru</language>
+		<description><?php bloginfo_rss( 'description' ); ?></description>
+		<language><?php bloginfo_rss( 'language' ); ?></language>
 		<atom:link href="<?php echo esc_url( get_feed_link('yandex-zen') ); ?>" rel="self" type="application/rss+xml" />
 		<?php do_action( 'rss2_head' ); ?>
 		<?php while( have_posts()) : the_post(); ?>

@@ -19,7 +19,7 @@ echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?' . '>
 		<title><?php bloginfo_rss( 'name' ); ?></title>
 		<link><?php bloginfo_rss( 'url' ); ?></link>
 		<description><?php bloginfo_rss( 'description' ); ?></description>
-		<language><?php bloginfo_rss( 'language' ); ?></language>
+		<language><?php echo array_shift( explode( '-', get_bloginfo( 'language' ) ) );?></language>
 		<?php do_action( 'rss2_head' ); ?>
 		<?php while ( have_posts() ) : the_post(); ?>
 			<item>

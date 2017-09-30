@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.4.5
+ * Version: 1.4.6
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -351,7 +351,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				$content = $this->clear_xml( $content );
 
 				$document = new Document();
-				$document->format( true );
+				//$document->format( true );
 
 				// Не добавлять теги <html>, <body>, <doctype>
 				$document->loadHtml( $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOBLANKS );

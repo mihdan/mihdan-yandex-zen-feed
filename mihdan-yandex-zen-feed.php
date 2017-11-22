@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.4.6
+ * Version: 1.4.7
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -128,7 +128,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 *
 		 * @var string
 		 */
-		private $taxonomy = 'category';
+		private $taxonomy = array( 'category' );
 
 		/**
 		 * Вернуть единственный экземпляр класса
@@ -238,7 +238,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 */
 		public function insert_category( $post_id ) {
 
-			$categories = get_the_terms( $post_id, $this->taxonomy );
+			$categories = wp_get_object_terms( $post_id, $this->taxonomy );
 
 			foreach ( $categories as $category ) {
 				echo $this->create_category( $this->get_category( $category->term_id ) );

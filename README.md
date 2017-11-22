@@ -2,7 +2,7 @@
 Contributors: mihdan
 Tags: WordPress, Yandex, Zen, Feed
 Requires at least: 4.3
-Tested up to: 4.8.2
+Tested up to: 4.9
 Stable tag: 1.2.3
 
 ## Description ##
@@ -16,6 +16,9 @@ WordPress плагин, генерирующий фид для сервиса Я
 * Активируйте плагин через меню Плагины.
 
 ## Changelog ##
+
+## 1.4.7 ##
+* Возможность указать несколько таксономий в виде массива для списка соотношения категорий, которые фильтруются через `mihdan_yandex_zen_feed_taxonomy`
 
 ## 1.4.6 ##
 * Убрал лишнее указание на форматирование вывода ленты

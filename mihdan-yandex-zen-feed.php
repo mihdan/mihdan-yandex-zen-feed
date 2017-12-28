@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.4.8
+ * Version: 1.4.9
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -131,6 +131,13 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		private $taxonomy = array( 'category' );
 
 		/**
+		 * Какие типы постов включать в ленту
+		 *
+		 * @var array
+		 */
+		private $post_type = array( 'post' );
+
+		/**
 		 * Вернуть единственный экземпляр класса
 		 *
 		 * @return Mihdan_Yandex_Zen_Feed
@@ -170,6 +177,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			$this->posts_per_rss = apply_filters( 'mihdan_yandex_zen_feed_posts_per_rss', 50 );
 			$this->categories = apply_filters( 'mihdan_yandex_zen_feed_categories', array() );
 			$this->taxonomy = apply_filters( 'mihdan_yandex_zen_feed_taxonomy', $this->taxonomy );
+			$this->post_type = apply_filters( 'mihdan_yandex_zen_feed_post_type', $this->post_type );
 			$this->feedname = apply_filters( 'mihdan_yandex_zen_feed_feedname', $this->slug );
 			$this->allowable_tags = apply_filters( 'mihdan_yandex_zen_feed_allowable_tags', $this->allowable_tags );
 			$this->copyright = apply_filters( 'mihdan_yandex_zen_feed_copyright', parse_url( get_home_url(), PHP_URL_HOST ) );
@@ -505,6 +513,9 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 				// Ограничить посты 50-ю
 				$wp_query->set( 'posts_per_rss', $this->posts_per_rss );
+
+				// Впариваем нужные нам типы постов
+				$wp_query->set( 'post_type', $this->post_type );
 			}
 		}
 

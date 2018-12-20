@@ -42,6 +42,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 	 * Class Mihdan_Yandex_Zen_Feed
 	 *
 	 * @link https://github.com/justintadlock/butterbean
+	 * @link https://yandex.ru/support/zen/website/rss-modify.html
 	 */
 	final class Mihdan_Yandex_Zen_Feed {
 
@@ -165,20 +166,20 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 */
 		private function setup() {
 			self::$dir_path = apply_filters( 'mihdan_yandex_zen_feed_dir_path', trailingslashit( plugin_dir_path( __FILE__ ) ) );
-			self::$dir_uri   = apply_filters( 'mihdan_yandex_zen_feed_dir_uri', trailingslashit( plugin_dir_url( __FILE__ ) ) );
+			self::$dir_uri  = apply_filters( 'mihdan_yandex_zen_feed_dir_uri', trailingslashit( plugin_dir_url( __FILE__ ) ) );
 		}
 
 		/**
 		 * Фильтры для переопределения настроек внутри темы
 		 */
 		public function after_setup_theme() {
-			$this->posts_per_rss = apply_filters( 'mihdan_yandex_zen_feed_posts_per_rss', 50 );
-			$this->categories = apply_filters( 'mihdan_yandex_zen_feed_categories', array() );
-			$this->taxonomy = apply_filters( 'mihdan_yandex_zen_feed_taxonomy', $this->taxonomy );
-			$this->post_type = apply_filters( 'mihdan_yandex_zen_feed_post_type', $this->post_type );
-			$this->feedname = apply_filters( 'mihdan_yandex_zen_feed_feedname', $this->slug );
+			$this->posts_per_rss  = apply_filters( 'mihdan_yandex_zen_feed_posts_per_rss', 50 );
+			$this->categories     = apply_filters( 'mihdan_yandex_zen_feed_categories', array() );
+			$this->taxonomy       = apply_filters( 'mihdan_yandex_zen_feed_taxonomy', $this->taxonomy );
+			$this->post_type      = apply_filters( 'mihdan_yandex_zen_feed_post_type', $this->post_type );
+			$this->feedname       = apply_filters( 'mihdan_yandex_zen_feed_feedname', $this->slug );
 			$this->allowable_tags = apply_filters( 'mihdan_yandex_zen_feed_allowable_tags', $this->allowable_tags );
-			$this->copyright = apply_filters( 'mihdan_yandex_zen_feed_copyright', parse_url( get_home_url(), PHP_URL_HOST ) );
+			$this->copyright      = apply_filters( 'mihdan_yandex_zen_feed_copyright', wp_parse_url( get_home_url(), PHP_URL_HOST ) );
 
 			// Подчеркивание нельзя использовать на старых серверах.
 			$this->feedname = str_replace( '_', '-', $this->feedname );
@@ -352,7 +353,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			$url = get_the_post_thumbnail_url( $post_id, 'large' );
 
 			$this->enclosure[] = array(
-				'src' => $url,
+				'src'     => $url,
 				'caption' => esc_attr( get_the_title( $post_id ) ),
 			);
 
@@ -374,8 +375,8 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 			// Создаем тег <img>
 			$img = new Element( 'img', null, array(
-				'src' => $src,
-				'width' => $width,
+				'src'    => $src,
+				'width'  => $width,
 				'height' => $height,
 			) );
 
@@ -411,8 +412,6 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * @return string
 		 */
 		public function content_feed( $content ) {
-
-			//ini_set( 'display_errors', true );
 
 			if ( is_feed( $this->feedname ) ) {
 
@@ -458,8 +457,8 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 						// Ищем картинку <img class="wp-image-*">
 						$image = $figure->first( 'img[class*="wp-image"]' );
-						$src = $image->attr( 'src' );
-						$size = $this->get_image_size( $src );
+						$src   = $image->attr( 'src' );
+						$size  = $this->get_image_size( $src );
 
 						// Ищем подпись <figcaption class="wp-caption-text">
 						$figcaption = $image->nextSibling( 'figcaption.wp-caption-text' );
@@ -482,15 +481,15 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 						// Ищем картинку <img class="wp-image-*">
 						$image = $figure->first( 'img[class*="wp-image-"]' );
-						$src = $image->attr( 'src' );
-						$size = $this->get_image_size( $src );
+						$src   = $image->attr( 'src' );
+						$size  = $this->get_image_size( $src );
 
 						// Ищем подпись <figcaption class="wp-caption-text">
 						$figcaption = $image->nextSibling( 'p.wp-caption-text' );
-						$caption = $figcaption->text();
+						$caption    = $figcaption->text();
 
 						$this->enclosure[] = array(
-							'src' => $src,
+							'src'     => $src,
 							'caption' => $caption,
 						);
 
@@ -510,13 +509,13 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 						/** @var Element $image */
 						/** @var Element $paragraph */
 						$paragraph = $image->parent();
-						$src = $image->attr( 'src' );
-						$size = $this->get_image_size( $src );
+						$src       = $image->attr( 'src' );
+						$size      = $this->get_image_size( $src );
 
 						$caption = $image->attr( 'alt' );
 
 						$this->enclosure[] = array(
-							'src' => $src,
+							'src'        => $src,
 							'figcaption' => $caption,
 						);
 
@@ -537,12 +536,12 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 						/** @var Element $image */
 						/** @var Element $paragraph */
 						$paragraph = $image->parent();
-						$src = $image->attr( 'src' );
-						$size = $this->get_image_size( $src );
-						$caption = $image->attr( 'alt' );
+						$src       = $image->attr( 'src' );
+						$size      = $this->get_image_size( $src );
+						$caption   = $image->attr( 'alt' );
 
 						$this->enclosure[] = array(
-							'src' => $src,
+							'src'        => $src,
 							'figcaption' => $caption,
 						);
 
@@ -563,9 +562,6 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 */
 		public function init() {
 			add_feed( $this->feedname, array( $this, 'add_feed' ) );
-
-			// Пытаемся сбросить правила реврайтов, если нашего фида там нет
-			//$this->flush_rewrite_rules();
 		}
 
 		/**
@@ -718,7 +714,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			$rules = get_option( 'rewrite_rules' );
 
 			// Ищем общее правило для фидов
-			$feeds = array_keys( $rules, 'index.php?&feed=$matches[1]' );
+			$feeds = array_keys( $rules, 'index.php?&feed=$matches[1]', true );
 
 			foreach ( $feeds as $feed ) {
 				if ( false !== strpos( $feed, $this->feedname ) ) {

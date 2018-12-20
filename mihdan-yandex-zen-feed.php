@@ -14,7 +14,7 @@
  * Plugin Name: Mihdan: Yandex Zen Feed
  * Plugin URI: https://www.kobzarev.com/projects/yandex-zen-feed/
  * Description: Плагин генерирует фид для сервиса Яндекс.Дзен
- * Version: 1.4.11
+ * Version: 1.5
  * Author: Mikhail Kobzarev
  * Author URI: https://www.kobzarev.com/
  * License: GNU General Public License v2
@@ -203,8 +203,52 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			add_action( 'mihdan_yandex_zen_feed_item', array( $this, 'insert_enclosure' ) );
 			add_action( 'mihdan_yandex_zen_feed_item', array( $this, 'insert_category' ) );
 			add_filter( 'the_content_feed', array( $this, 'content_feed' ) );
+			add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
+			add_action( 'save_post', array( $this, 'save_meta_box' ) );
+		}
 
-			//print_r(get_option( 'rewrite_rules' ));die;
+		/**
+		 * Добавляем метабок с настройками поста.
+		 */
+		public function add_meta_box() {
+
+			// На каких экранах админки показывать.
+			$screen = $this->post_type;
+
+			// Добавляем метабокс.
+			add_meta_box( $this->slug, 'Яндекс.Дзен', array( $this, 'render_meta_box' ), $screen, 'side', 'high' );
+		}
+
+		/**
+		 * Отрисовываем содержимое метабокса с настройками поста.
+		 */
+		public function render_meta_box() {
+			$exclude = (bool) get_post_meta( get_the_ID(), $this->slug . '_exclude', true );
+			?>
+			<label for="<?php echo esc_attr( $this->slug ); ?>_exclude" title="Включить/Исключить запись из ленты">
+				<input type="checkbox" value="1" name="<?php echo esc_attr( $this->slug ); ?>_exclude" id="<?php echo esc_attr( $this->slug ); ?>_exclude" <?php checked( $exclude, true ); ?>> Исключить из ленты
+			</label>
+			<?php
+		}
+
+		/**
+		 * Созраняем данные метабокса.
+		 *
+		 * @param int $post_id идентификатор записи.
+		 */
+		public function save_meta_box( $post_id ) {
+			if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
+				return;
+			}
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				return;
+			}
+
+			if ( isset( $_POST[ $this->slug . '_exclude' ] ) ) {
+				update_post_meta( $post_id, $this->slug . '_exclude', 1 );
+			} else {
+				delete_post_meta( $post_id, $this->slug . '_exclude' );
+			}
 		}
 
 		/**
@@ -516,6 +560,22 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 				// Впариваем нужные нам типы постов
 				$wp_query->set( 'post_type', $this->post_type );
+
+				// Получаем текущие мета запросы.
+				$meta_query = $wp_query->get( 'meta_query' );
+
+				if ( empty( $meta_query ) ) {
+					$meta_query = array();
+				}
+
+				// Добавляем исключения.
+				$meta_query[] = array(
+					'key'     => $this->slug . '_exclude',
+					'compare' => 'NOT EXISTS',
+				);
+
+				// Исключаем записи с галочкой в админке
+				$wp_query->set( 'meta_query', $meta_query );
 			}
 		}
 

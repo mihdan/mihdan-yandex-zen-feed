@@ -206,6 +206,23 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			add_filter( 'the_content_feed', array( $this, 'content_feed' ) );
 			add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 			add_action( 'save_post', array( $this, 'save_meta_box' ) );
+			add_filter( 'wpseo_include_rss_footer', array( $this, 'hide_wpseo_rss_footer' ) );
+		}
+
+		/**
+		 * Hide RSS footer created by WordPress SEO from our RSS feed
+		 *
+		 * @param  boolean $include_footer Default inclusion value
+		 *
+		 * @return boolean                 Modified inclusion value
+		 */
+		public function hide_wpseo_rss_footer( $include_footer = true ) {
+
+			if ( is_feed( $this->feedname ) ) {
+				$include_footer = false;
+			}
+
+			return $include_footer;
 		}
 
 		/**

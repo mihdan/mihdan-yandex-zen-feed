@@ -69,26 +69,23 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * @var array $allowable_tags массив разрешенных тегов для контента
 		 */
 		private $allowable_tags = array(
-			//'<br>',
-			'<p>',
-			//'<h2>',
-			//'<h3>',
-			//'<h4>',
-			//'<h5>',
-			//'<h6>',
-			//'<ul>',
-			//'<ol>',
-			//'<li>',
-			'<img>',
-			'<figcaption>',
-			'<figure>',
-			'<video>',
-			//'<a>',
-			//'<div>',
-			//'<b>',
-			//'<strong>',
-			//'<i>',
-			//'<em>',
+			'p'          => array(),
+			'figure'     => array(),
+			'img'        => array(
+				'src'    => true,
+				'width'  => true,
+				'height' => true,
+			),
+			'figcaption' => array(),
+			'video'      => array(
+				'width'  => true,
+				'height' => true,
+				'src'    => true,
+			),
+			'source'     => array(
+				'src'  => true,
+				'type' => true,
+			),
 		);
 
 		/**
@@ -421,7 +418,13 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 				$this->enclosure = array();
 
+				// Убираем лишнее из HTML.
+				$content = $this->nomalize_html( $content );
+
+				// Вырезаем все теги, кроме разрешенных.
 				$content = $this->strip_tags( $content, $this->allowable_tags );
+
+				// Чистим HTML после удаления тегов.
 				$content = $this->clear_xml( $content );
 
 				$document = new Document();
@@ -608,15 +611,30 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * но удаляет также <script>, <style>
 		 *
 		 * @param string $string исходная строка
-		 * @param null|array $allowable_tags массив разрешенных тегов
 		 *
 		 * @return string
 		 */
-		public function strip_tags( $string, $allowable_tags = null ) {
-			$string = preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $string );
-			$string = strip_tags( $string, implode( ',', $allowable_tags ) );
+		public function strip_tags( $string ) {
+			$string = wp_kses( $string, $this->allowable_tags );
 
 			return $string;
+		}
+
+		/**
+		 * Нормализуем HTML.
+		 *
+		 * @param string str Исходная строка.
+		 *
+		 * @return string
+		 */
+		public function nomalize_html( $str ) {
+
+			$str = preg_replace( '|(<img.*?src=".*?ajax\-loader.*?".*?>)|si', '', $str );
+			$str = preg_replace( '|<img.*?src=".*?gear_icon\.png".*?>|si', '', $str );
+			$str = preg_replace( '|<img([^>]+)>|si', '<img$1>', $str );
+			$str = str_replace( 'data-src="', 'src="', $str );
+
+			return $str;
 		}
 
 		/**
@@ -630,25 +648,12 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 			$str = str_replace( '&hellip;', '...', $str );
 			$str = str_replace( '&nbsp;', ' ', $str );
-
-			$str = preg_replace( '|(<img.*?src=".*?ajax\-loader.*?".*?>)|si', '', $str );
-			$str = preg_replace( '|<img.*?src=".*?gear_icon\.png".*?>|si', '', $str );
-			$str = preg_replace( '|<img([^>]+)>|si', '<img$1>', $str );
-			$str = str_replace( 'data-src="', 'src="', $str );
 			$str = preg_replace( '/[\r\n]+/', "\n", $str );
 			$str = preg_replace( '/[ \t]+/', ' ', $str );
-
-			/**$str = preg_replace( '/(<img.*?>)/', '<figure>$1</figure>', $str );*/
-			$str = preg_replace( '/ style="[^"]+"/', '', $str );
-			$str = preg_replace( '/ srcset="[^"]+"/', '', $str );
-			$str = preg_replace( '/ sizes="[^"]+"/', '', $str );
-
 			$str = str_replace( PHP_EOL, '', $str );
 			$str = preg_replace( '/\s+/', ' ', $str );
 			$str = str_replace( '> <', '><', $str );
 			$str = preg_replace( '/<[^\/>]*><\/[^>]*>/', '', $str );
-
-
 			$str = force_balance_tags( $str );
 
 			return trim( $str );

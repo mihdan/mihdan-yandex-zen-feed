@@ -1,26 +1,29 @@
 [
     {
         "name": "imangazaliev/didom",
-        "version": "1.12",
-        "version_normalized": "1.12.0.0",
+        "version": "1.14",
+        "version_normalized": "1.14.0.0",
         "source": {
             "type": "git",
             "url": "https://github.com/Imangazaliev/DiDOM.git",
-            "reference": "03f2daaa0a95ecf04c0cf1d56b22ca309f1f1558"
+            "reference": "4bf50a91f3f81481816fa1ea0da5299b5219b86b"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/Imangazaliev/DiDOM/zipball/03f2daaa0a95ecf04c0cf1d56b22ca309f1f1558",
-            "reference": "03f2daaa0a95ecf04c0cf1d56b22ca309f1f1558",
+            "url": "https://api.github.com/repos/Imangazaliev/DiDOM/zipball/4bf50a91f3f81481816fa1ea0da5299b5219b86b",
+            "reference": "4bf50a91f3f81481816fa1ea0da5299b5219b86b",
             "shasum": ""
         },
         "require": {
+            "ext-dom": "*",
+            "ext-iconv": "*",
             "php": ">=5.4"
         },
         "require-dev": {
+            "friendsofphp/php-cs-fixer": "2.9",
             "phpunit/phpunit": "^4.8"
         },
-        "time": "2017-08-28 02:25:34",
+        "time": "2018-12-17T18:48:24+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {

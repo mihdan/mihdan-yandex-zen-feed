@@ -2,9 +2,9 @@
 
 namespace Tests\DiDom;
 
-use Tests\TestCase;
 use DiDom\Document;
 use DiDom\Query;
+use Tests\TestCase;
 
 class DocumentTest extends TestCase
 {
@@ -492,6 +492,16 @@ class DocumentTest extends TestCase
 
         $this->assertInternalType('int', $document->count('li'));
         $this->assertEquals(0, $document->count('li'));
+    }
+
+    public function testCreateXpath()
+    {
+        $document = new Document();
+
+        $xpath =$document->createXpath();
+
+        $this->assertInstanceOf('DOMXPath', $xpath);
+        $this->assertEquals($document->getDocument(), $xpath->document);
     }
 
     public function testHtml()

@@ -71,8 +71,11 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 */
 		private $allowable_tags = array(
 			'p'          => array(),
-			'figure'     => array(),
+			'figure'     => array(
+				'class' => array(),
+			),
 			'img'        => array(
+				'alt'    => true,
 				'src'    => true,
 				'width'  => true,
 				'height' => true,
@@ -340,7 +343,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		public function get_image_size( $url ) {
 			$relative = $this->get_relative_url( $url );
 
-			return getimagesize( $relative );
+			return @getimagesize( $relative );
 		}
 
 		/**
@@ -417,6 +420,17 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 				$this->enclosure = array();
 
+				/**
+				 * Получить тумбочку поста
+				 */
+				if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() ) {
+					$this->get_futured_image( get_the_ID() );
+
+					// Добавить обложку поста.
+					//$cover   = sprintf( '<p><img src="%s" alt="%s"></p>', $this->enclosure[0]['src'], $this->enclosure[0]['caption'] );
+					//$content = $cover . $content;
+				}
+
 				// Убираем лишнее из HTML.
 				$content = $this->nomalize_html( $content );
 
@@ -433,13 +447,6 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				$document->loadHtml( $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOBLANKS );
 
 				$copyright = $this->copyright;
-
-				/**
-				 * Получить тумбочку поста
-				 */
-				if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() ) {
-					$this->get_futured_image( get_the_ID() );
-				}
 
 				/**
 				 * Если включена поддержка тегов <figure> на уровне двигла,
@@ -527,9 +534,9 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 				/**
 				 * Если нет ни HTML5 ни HTML4 нотации,
-				 * ищем простые теги <img> внутри <div>
+				 * ищем простые теги <img> внутри <p>
 				 */
-				$images = $document->find( 'div > img' );
+				$images = $document->find( 'p > img' );
 
 				if ( $images ) {
 					foreach ( $images as $image ) {
@@ -549,6 +556,12 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 						$paragraph->replace( $this->create_valid_structure( $src, $caption, $copyright, $size[0], $size[1] ) );
 
 					}
+				}
+
+				// Добавим обложку поста в начало документа.
+				if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() ) {
+					$cover = $this->create_valid_structure( $this->enclosure[0]['src'], $this->enclosure[0]['caption'], $copyright, 640, 480 );
+					$document->prependChild( $cover );
 				}
 
 				$content = $document->format( true )->html();

@@ -70,6 +70,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * @var array $allowable_tags массив разрешенных тегов для контента
 		 */
 		private $allowable_tags = array(
+			'div'        => array(),
 			'p'          => array(),
 			'figure'     => array(
 				'class' => array(),
@@ -441,7 +442,6 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				$content = $this->clear_xml( $content );
 
 				$document = new Document();
-				//$document->format( true );
 
 				// Не добавлять теги <html>, <body>, <doctype>
 				$document->loadHtml( $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOBLANKS );
@@ -469,30 +469,6 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 						// Ищем подпись <figcaption class="wp-caption-text">
 						$figcaption = $image->nextSibling( 'figcaption.wp-caption-text' );
-						$caption = $figcaption->text();
-
-						$this->enclosure[] = array(
-							'src' => $src,
-							'caption' => $caption,
-						);
-
-						$figure->replace( $this->create_valid_structure( $src, $caption, $copyright, $size[0], $size[1] ) );
-					}
-				} else {
-					$figures = $document->find( 'div.wp-caption' );
-
-					foreach ( $figures as $figure ) {
-
-						/** @var Element $figure */
-						/** @var Element $image */
-
-						// Ищем картинку <img class="wp-image-*">
-						$image = $figure->first( 'img[class*="wp-image-"]' );
-						$src   = $image->attr( 'src' );
-						$size  = $this->get_image_size( $src );
-
-						// Ищем подпись <figcaption class="wp-caption-text">
-						$figcaption = $image->nextSibling( 'p.wp-caption-text' );
 						$caption    = $figcaption->text();
 
 						$this->enclosure[] = array(
@@ -502,7 +478,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 						$figure->replace( $this->create_valid_structure( $src, $caption, $copyright, $size[0], $size[1] ) );
 					}
-				} // End if().
+				}
 
 				/**
 				 * Если нет ни HTML5 ни HTML4 нотации,
@@ -561,7 +537,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				// Добавим обложку поста в начало документа.
 				if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() ) {
 					$cover = $this->create_valid_structure( $this->enclosure[0]['src'], $this->enclosure[0]['caption'], $copyright, 640, 480 );
-					$document->find( 'p' )[0]->prependChild( $cover );
+					$document->first( 'p' )->prependChild( $cover );
 				}
 
 				$content = $document->format( true )->html();
@@ -655,14 +631,17 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 */
 		public function clear_xml( $str ) {
 
+			$str = trim( $str );
 			$str = str_replace( '&hellip;', '...', $str );
 			$str = str_replace( '&nbsp;', ' ', $str );
-			$str = preg_replace( '/[\r\n]+/', "\n", $str );
-			$str = preg_replace( '/[ \t]+/', ' ', $str );
-			$str = str_replace( PHP_EOL, '', $str );
-			$str = preg_replace( '/\s+/', ' ', $str );
+			$str = trim( preg_replace( '/\s+/', ' ', $str ) );
+			$str = str_replace( '<div>', '<p>', $str );
+			$str = str_replace( '</div>', '</p>', $str );
 			$str = str_replace( '> <', '><', $str );
-			$str = preg_replace( '/<[^\/>]*><\/[^>]*>/', '', $str );
+			$str = preg_replace( '|(<p>)+|', '<p>', $str );
+			$str = preg_replace( '|(</p>)+|', '</p>', $str );
+			$str = str_replace( '<p></p>', '', $str );
+
 			$str = force_balance_tags( $str );
 
 			return trim( $str );

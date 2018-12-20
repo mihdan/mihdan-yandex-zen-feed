@@ -561,7 +561,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				// Добавим обложку поста в начало документа.
 				if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() ) {
 					$cover = $this->create_valid_structure( $this->enclosure[0]['src'], $this->enclosure[0]['caption'], $copyright, 640, 480 );
-					$document->prependChild( $cover );
+					$document->find( 'p' )[0]->prependChild( $cover );
 				}
 
 				$content = $document->format( true )->html();

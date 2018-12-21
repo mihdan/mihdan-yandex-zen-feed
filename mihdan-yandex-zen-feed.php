@@ -354,11 +354,14 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 */
 		public function get_futured_image( $post_id ) {
 
-			$url = get_the_post_thumbnail_url( $post_id, 'large' );
+			$url  = get_the_post_thumbnail_url( $post_id, 'large' );
+			$size = $this->get_image_size( $url );
 
 			$this->enclosure[] = array(
 				'src'     => $url,
 				'caption' => esc_attr( get_the_title( $post_id ) ),
+				'width'   => $size[0],
+				'height'  => $size[1],
 			);
 
 		}
@@ -369,6 +372,8 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * @param $src
 		 * @param $caption
 		 * @param $copyright
+		 * @param $width
+		 * @param $height
 		 *
 		 * @return Element
 		 */
@@ -440,7 +445,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				$document = new Document();
 
 				// Не добавлять теги <html>, <body>, <doctype>
-				$document->loadHtml( $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOBLANKS );
+				$document->loadHtml( $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOBLANKS | LIBXML_PARSEHUGE );
 
 				$copyright = $this->copyright;
 
@@ -512,31 +517,32 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 				if ( $images ) {
 					foreach ( $images as $image ) {
+
 						/** @var Element $image */
 						/** @var Element $paragraph */
-						$paragraph = $image->parent();
-
 						$src     = $image->attr( 'src' );
-						$size    = $this->get_image_size( $src );
 						$caption = $image->attr( 'alt' );
+						$size    = $this->get_image_size( $src );
 
 						$this->enclosure[] = array(
 							'src'        => $src,
 							'figcaption' => $caption,
+							'width'      => $size[0],
+							'height'     => $size[1],
 						);
 
 						// Заменяем тег <img> на сгенерированую конструкцию
-						$paragraph->replace( $this->create_valid_structure( $src, $caption, $copyright, $size[0], $size[1] ) );
+						$image->replace( $this->create_valid_structure( $src, $caption, $copyright, $size[0], $size[1] ) );
 					}
 				}
 
 				// Добавим обложку поста в начало документа.
 				if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() ) {
-					$cover = $this->create_valid_structure( $this->enclosure[0]['src'], $this->enclosure[0]['caption'], $copyright, 640, 480 );
+					$cover = $this->create_valid_structure( $this->enclosure[0]['src'], $this->enclosure[0]['caption'], $copyright, $this->enclosure[0]['width'], $this->enclosure[0]['height'] );
 					$document->first( 'p' )->prependChild( $cover );
 				}
 
-				$content = $document->format()->html();
+				$content = $document->format( true )->html();
 			}
 
 			return $content;
@@ -616,8 +622,9 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			$str = preg_replace( '|<div>Фото:[^<]+?</div>|', '', $str );
 			$str = str_replace( 'data-src="', 'src="', $str );
 			$str = str_replace( '<div class="clearfix"></div>', '', $str );
+			$str = str_replace( '<span class="Apple-converted-space"> </span>', '', $str );
 
-			return $str;
+			return apply_filters( 'mihdan_yandex_zen_feed_normalize_html', $str );
 		}
 
 		/**
@@ -640,20 +647,10 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			$str = preg_replace( '|(</p>)+|', '</p>', $str );
 			$str = str_replace( '<p></p>', '', $str );
 			$str = trim( $str );
-
-			// Убрать начальный тег параграфа, чтобы не было вложенных параграфов.
-			if ( '<p>' === substr( $str, 0, 3 ) ) {
-				$str = substr( $str, 3 );
-			}
-
-			// Убрать конечный тег параграфа, чтобы не было вложенных параграфов.
-			if ( '</p>' === substr( $str, -4 ) ) {
-				$str = substr( $str, 0, -4 );
-			}
-
 			$str = force_balance_tags( $str );
+			$str = trim( $str );
 
-			return trim( $str );
+			return apply_filters( 'mihdan_yandex_zen_feed_clear_xml', $str );
 		}
 
 		/**

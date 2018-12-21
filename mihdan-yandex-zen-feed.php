@@ -73,7 +73,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			'div'        => array(),
 			'p'          => array(),
 			'figure'     => array(
-				'class' => array(),
+				'class' => true,
 			),
 			'img'        => array(
 				'alt'    => true,
@@ -426,17 +426,13 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				 */
 				if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() ) {
 					$this->get_futured_image( get_the_ID() );
-
-					// Добавить обложку поста.
-					//$cover   = sprintf( '<p><img src="%s" alt="%s"></p>', $this->enclosure[0]['src'], $this->enclosure[0]['caption'] );
-					//$content = $cover . $content;
 				}
 
 				// Убираем лишнее из HTML.
 				$content = $this->nomalize_html( $content );
 
 				// Вырезаем все теги, кроме разрешенных.
-				$content = $this->strip_tags( $content, $this->allowable_tags );
+				$content = $this->strip_tags( $content );
 
 				// Чистим HTML после удаления тегов.
 				$content = $this->clear_xml( $content );
@@ -452,15 +448,15 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				 * Если включена поддержка тегов <figure> на уровне двигла,
 				 * то теги <figure>, <figcaption> уже есть и надо добавить
 				 * только span.copyright
-				 */
+				 *
 				if ( current_theme_supports( 'html5', 'caption' ) ) {
 
 					$figures = $document->find( 'figure.wp-caption' );
 
 					foreach ( $figures as $figure ) {
 
-						/** @var Element $figure */
-						/** @var Element $image */
+						/** @var Element $figure *
+						/** @var Element $image *
 
 						// Ищем картинку <img class="wp-image-*">
 						$image = $figure->first( 'img[class*="wp-image"]' );
@@ -484,13 +480,13 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 				 * Если нет ни HTML5 ни HTML4 нотации,
 				 * ищем простые теги <img>, ставим их ALT
 				 * в <figcaption>, и добавляем <span class="copyright">
-				 */
+				 *
 				$images = $document->find( 'p > img[class*="wp-image-"]' );
 
 				if ( $images ) {
 					foreach ( $images as $image ) {
-						/** @var Element $image */
-						/** @var Element $paragraph */
+						/** @var Element $image *
+						/** @var Element $paragraph *
 						$paragraph = $image->parent();
 						$src       = $image->attr( 'src' );
 						$size      = $this->get_image_size( $src );
@@ -507,7 +503,7 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 					}
 				}
-
+				*/
 				/**
 				 * Если нет ни HTML5 ни HTML4 нотации,
 				 * ищем простые теги <img> внутри <p>
@@ -519,9 +515,10 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 						/** @var Element $image */
 						/** @var Element $paragraph */
 						$paragraph = $image->parent();
-						$src       = $image->attr( 'src' );
-						$size      = $this->get_image_size( $src );
-						$caption   = $image->attr( 'alt' );
+
+						$src     = $image->attr( 'src' );
+						$size    = $this->get_image_size( $src );
+						$caption = $image->attr( 'alt' );
 
 						$this->enclosure[] = array(
 							'src'        => $src,
@@ -530,7 +527,6 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 						// Заменяем тег <img> на сгенерированую конструкцию
 						$paragraph->replace( $this->create_valid_structure( $src, $caption, $copyright, $size[0], $size[1] ) );
-
 					}
 				}
 
@@ -540,8 +536,8 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 					$document->first( 'p' )->prependChild( $cover );
 				}
 
-				$content = $document->format( true )->html();
-			} // End if().
+				$content = $document->format()->html();
+			}
 
 			return $content;
 		}
@@ -617,7 +613,9 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			$str = preg_replace( '|(<img.*?src=".*?ajax\-loader.*?".*?>)|si', '', $str );
 			$str = preg_replace( '|<img.*?src=".*?gear_icon\.png".*?>|si', '', $str );
 			$str = preg_replace( '|<img([^>]+)>|si', '<img$1>', $str );
+			$str = preg_replace( '|<div>Фото:[^<]+?</div>|', '', $str );
 			$str = str_replace( 'data-src="', 'src="', $str );
+			$str = str_replace( '<div class="clearfix"></div>', '', $str );
 
 			return $str;
 		}
@@ -641,6 +639,17 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			$str = preg_replace( '|(<p>)+|', '<p>', $str );
 			$str = preg_replace( '|(</p>)+|', '</p>', $str );
 			$str = str_replace( '<p></p>', '', $str );
+			$str = trim( $str );
+
+			// Убрать начальный тег параграфа, чтобы не было вложенных параграфов.
+			if ( '<p>' === substr( $str, 0, 3 ) ) {
+				$str = substr( $str, 3 );
+			}
+
+			// Убрать конечный тег параграфа, чтобы не было вложенных параграфов.
+			if ( '</p>' === substr( $str, -4 ) ) {
+				$str = substr( $str, 0, -4 );
+			}
 
 			$str = force_balance_tags( $str );
 

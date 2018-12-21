@@ -541,8 +541,12 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 
 				// Добавим обложку поста в начало документа.
 				if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() ) {
-					$cover = $this->create_valid_structure( $this->enclosure[0]['src'], $this->enclosure[0]['caption'], $copyright, $this->enclosure[0]['width'], $this->enclosure[0]['height'] );
-					$document->first( 'p' )->prependChild( $cover );
+					$cover           = $this->create_valid_structure( $this->enclosure[0]['src'], $this->enclosure[0]['caption'], $copyright, $this->enclosure[0]['width'], $this->enclosure[0]['height'] );
+					$first_paragraph = $document->first( 'p' );
+
+					if ( $first_paragraph ) {
+						$first_paragraph->prependChild( $cover );
+					}
 				}
 
 				$content = $document->format( true )->html();

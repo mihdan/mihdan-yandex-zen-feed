@@ -311,11 +311,14 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		public function insert_category( $post_id ) {
 
 			$categories = wp_get_object_terms( $post_id, $this->taxonomy );
+			$buffer     = array();
 
 			foreach ( $categories as $category ) {
 				$category_name = $this->get_category( $category->term_id );
+				$category_name = trim( $category_name );
 
-				if ( $category_name ) {
+				if ( $category_name && false === in_array( $category_name, $buffer, true ) ) {
+					$buffer[] = $category_name;
 					echo $this->create_category( $category_name );
 				}
 			}

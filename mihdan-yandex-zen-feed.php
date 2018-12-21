@@ -622,13 +622,16 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 * @return string
 		 */
 		public function nomalize_html( $str ) {
-
+			$str = trim( preg_replace( '/\s+/', ' ', $str ) );
 			$str = preg_replace( '|(<img.*?src=".*?ajax\-loader.*?".*?>)|si', '', $str );
 			$str = preg_replace( '|<img.*?src=".*?gear_icon\.png".*?>|si', '', $str );
 			$str = preg_replace( '|<img([^>]+)>|si', '<img$1>', $str );
+			$str = preg_replace( '|<div data-desc=".*?"></div>|si', '', $str );
 			$str = preg_replace( '|<div>Фото:[^<]+?</div>|', '', $str );
+			$str = preg_replace( '|<!--(.*?)-->|', '', $str );
 			$str = str_replace( 'data-src="', 'src="', $str );
 			$str = str_replace( '<div class="clearfix"></div>', '', $str );
+			$str = str_replace( "<div style='clear:both;'></div>", '', $str );
 			$str = str_replace( '<span class="Apple-converted-space"> </span>', '', $str );
 
 			return apply_filters( 'mihdan_yandex_zen_feed_normalize_html', $str );

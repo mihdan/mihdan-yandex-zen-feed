@@ -623,9 +623,10 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 */
 		public function nomalize_html( $str ) {
 			$str = trim( preg_replace( '#\s+#', ' ', $str ) );
-			$str = preg_replace( '#<img[\s]+src="(.*?)ajax\-loader\.gif"(.*?)>#si', '', $str );
-			$str = preg_replace( '#<img[\s]+src="(.*?)gear\_icon\.png"(.*?)>#si', '', $str );
-			$str = preg_replace( '#<div[\s]+id="insideshare"([^>]+)>([^>]+)</div>#si', '', $str );
+			$str = preg_replace( '#<img src="(.*?)ajax\-loader\.gif"(.*?)>#si', '', $str );
+			$str = preg_replace( '#<img src="(.*?)gear\_icon\.png"(.*?)>#si', '', $str );
+			$str = preg_replace( '#<div id="insideshare"([^>]+)>([^>]+)</div>#si', '', $str );
+			$str = preg_replace( '#<div class="add_to_collection_text popup-modal"([^>]+)>([^>]+)</div>#si', '', $str );
 			$str = preg_replace( '#<div data-desc=".*?"></div>#si', '', $str );
 			$str = preg_replace( '#<div>Фото:[^<]+?</div>#', '', $str );
 			$str = preg_replace( '#<!--(.*?)-->#', '', $str );

@@ -205,10 +205,25 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 			add_action( 'after_setup_theme', array( $this, 'after_setup_theme' ) );
 			add_action( 'mihdan_yandex_zen_feed_item', array( $this, 'insert_enclosure' ) );
 			add_action( 'mihdan_yandex_zen_feed_item', array( $this, 'insert_category' ) );
+			add_action( 'mihdan_yandex_zen_feed_item', array( $this, 'media_rating' ) );
 			add_filter( 'the_content_feed', array( $this, 'content_feed' ) );
 			add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 			add_action( 'save_post', array( $this, 'save_meta_box' ) );
 			add_filter( 'wpseo_include_rss_footer', array( $this, 'hide_wpseo_rss_footer' ) );
+		}
+
+        /**
+         * Added adult rating in feed
+         * @param $id
+         */
+        public function media_rating($id ) {
+			$rating = (bool) get_post_meta( $id, $this->slug . '_rating', true );
+
+			if ( empty( $rating ) ) {
+				echo '<media:rating scheme="urn:simple">nonadult</media:rating>';
+			}else{
+				echo '<media:rating scheme="urn:simple">adult</media:rating>';
+            }
 		}
 
 		/**
@@ -244,9 +259,17 @@ if ( ! class_exists( 'Mihdan_Yandex_Zen_Feed' ) ) {
 		 */
 		public function render_meta_box() {
 			$exclude = (bool) get_post_meta( get_the_ID(), $this->slug . '_exclude', true );
+			$rating  = (bool) get_post_meta( get_the_ID(), $this->slug . '_rating', true );
 			?>
 			<label for="<?php echo esc_attr( $this->slug ); ?>_exclude" title="Включить/Исключить запись из ленты">
 				<input type="checkbox" value="1" name="<?php echo esc_attr( $this->slug ); ?>_exclude" id="<?php echo esc_attr( $this->slug ); ?>_exclude" <?php checked( $exclude, true ); ?>> Исключить из ленты
+            </label>
+            <br>
+            <label for="<?php echo esc_attr( $this->slug ); ?>_rating"
+                   title="Включить/Выключить пометку об откровенном контенте">
+                <input type="checkbox" value="1" name="<?php echo esc_attr( $this->slug ); ?>_rating"
+                       id="<?php echo esc_attr( $this->slug ); ?>_rating" <?php checked( $rating, true ); ?>>
+                Содержит откровенный контент
 			</label>
 			<?php
 		}

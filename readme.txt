@@ -5,7 +5,7 @@ Donate link: https://www.kobzarev.com/donate/
 Requires at least: 5.2
 Tested up to: 6.2
 Requires PHP: 5.6.20
-Stable tag: 1.5.2
+Stable tag: 1.5.2.1
 License: GPL2
 
 Плагин генерирует фид для сервиса Яндекс.Дзен

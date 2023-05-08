@@ -2,10 +2,10 @@
 Contributors: mihdan
 Tags: mihdan, yandex, zen, feed
 Donate link: https://www.kobzarev.com/donate/
-Requires at least: 4.6
-Tested up to: 5.1
-Requires PHP: 5.3
-Stable tag: 1.5.1
+Requires at least: 5.2
+Tested up to: 6.2
+Requires PHP: 5.6.20
+Stable tag: 1.5.2
 License: GPL2
 
 Плагин генерирует фид для сервиса Яндекс.Дзен
@@ -19,6 +19,11 @@ License: GPL2
 После установки фид станет доступным по адресу `http://example.com/feed/mihdan-yandex-zen-feed/`
 
 == Changelog ==
+
+= 1.5.2 (08.05.2023) =
+* Добавлена поддержка WordPress 6.2+
+* Добавлена поддержка PHP 8.2+
+
 = 1.5.1 (25.12.2018) =
 * Исправлены ошибки парсинга, доработаны регулярки
 * Добавлены хуки `mihdan_yandex_zen_feed_normalize_html` и `mihdan_yandex_zen_feed_clear_xml`
